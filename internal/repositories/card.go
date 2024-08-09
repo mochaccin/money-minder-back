@@ -132,3 +132,28 @@ func (r *UserRepo) RemoveTransaction(cardID string, transactionID string) error 
 
 	return nil
 }
+
+func (r *CardRepo) GetCardsByUserID(userID string) ([]*types.Card, error) {
+	filter := bson.M{"user_id": userID}
+	var cards []*types.Card
+
+	cursor, err := r.MongoCollection.Find(context.Background(), filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+
+	for cursor.Next(context.Background()) {
+		var card types.Card
+		if err := cursor.Decode(&card); err != nil {
+			return nil, err
+		}
+		cards = append(cards, &card)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return cards, nil
+}
