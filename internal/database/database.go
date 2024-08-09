@@ -22,9 +22,11 @@ type service struct {
 
 var uri = os.Getenv("DB_URI")
 
-// database = os.Getenv("DB_DATABASE")
-
 func New() Service {
+	if uri == "" {
+		log.Fatal("DB_URI is not set in the environment")
+	}
+
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(uri))
 	if err != nil {
 		log.Fatal(err)

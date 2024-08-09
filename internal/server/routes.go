@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"log"
 	"log/slog"
+	"money-minder/internal/handlers"
 	"net/http"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", s.healthHandler)
+	mux.HandleFunc("POST /users", makeHandler(handlers.CreateUser))
 
 	return mux
 }
