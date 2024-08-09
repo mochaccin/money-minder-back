@@ -144,7 +144,9 @@ func (r *CardRepo) GetCardsByUserID(userID string) ([]*types.Card, error) {
 	defer cursor.Close(context.Background())
 
 	for cursor.Next(context.Background()) {
+
 		var card types.Card
+
 		if err := cursor.Decode(&card); err != nil {
 			return nil, err
 		}
