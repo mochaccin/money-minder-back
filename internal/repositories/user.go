@@ -79,6 +79,23 @@ func (r *UserRepo) UpdateName(usrID string, newName string) error {
 	return nil
 }
 
+func (r *UserRepo) UpdatePassword(usrID string, newPassword string) error {
+	id, err := primitive.ObjectIDFromHex(usrID)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.D{{"_id", id}}
+	update := bson.D{{"$set", bson.D{{"password", newPassword}}}}
+
+	_, err = r.MongoCollection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *UserRepo) AddSpend(userID string, spend *types.Spend) error {
 	id, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
@@ -131,6 +148,28 @@ func (r *UserRepo) RemoveCard(userID string, cardID string) error {
 	_, err = r.MongoCollection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		return fmt.Errorf("failed to remove card from user: %w", err)
+	}
+
+	return nil
+}
+
+func (r *UserRepo) RemoveSpend(userID string, spendID string) error {
+	userObjID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return err
+	}
+
+	spendObjID, err := primitive.ObjectIDFromHex(spendID)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.D{{"_id", userObjID}}
+	update := bson.D{{"$pull", bson.D{{"spends", bson.D{{"_id", spendObjID}}}}}}
+
+	_, err = r.MongoCollection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		return fmt.Errorf("failed to remove spend from user: %w", err)
 	}
 
 	return nil
