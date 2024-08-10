@@ -2,8 +2,17 @@ package handlers
 
 import (
 	"encoding/json"
+	"money-minder/internal/database"
+	"money-minder/internal/repositories"
 	"money-minder/internal/types"
 	"net/http"
+)
+
+var (
+	service        = database.New()
+	userRepository = &repositories.UserRepo{
+		MongoCollection: service.GetCollection("users"),
+	}
 )
 
 func CreateUser(w http.ResponseWriter, r *http.Request) error {
@@ -16,7 +25,13 @@ func CreateUser(w http.ResponseWriter, r *http.Request) error {
 			Msg:    "Couldnt create user, verify that the values are formatted corrected",
 		}
 	}
-	return writeJSON(w, http.StatusOK, usr)
+
+	result, err := userRepository.InsertUser(usr)
+	if err != nil {
+		return err
+	}
+
+	return writeJSON(w, http.StatusOK, result)
 }
 
 type APIError struct {

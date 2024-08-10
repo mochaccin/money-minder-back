@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -14,26 +15,41 @@ import (
 
 type Service interface {
 	Health() map[string]string
+	GetCollection(name string) *mongo.Collection
 }
 
 type service struct {
 	db *mongo.Client
 }
 
-var uri = os.Getenv("DB_URI")
+var (
+	instance *service
+	once     sync.Once
+	uri      = os.Getenv("DB_URI")
+)
 
 func New() Service {
-	if uri == "" {
-		log.Fatal("DB_URI is not set in the environment")
-	}
+	once.Do(func() {
+		if uri == "" {
+			log.Fatal("DB_URI is not set in the environment")
+		}
 
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(uri))
-	if err != nil {
-		log.Fatal(err)
-	}
-	return &service{
-		db: client,
-	}
+		client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(uri))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		instance = &service{
+			db: client,
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := instance.db.Ping(ctx, nil); err != nil {
+			log.Fatalf(fmt.Sprintf("db connection error: %v", err))
+		}
+	})
+	return instance
 }
 
 func (s *service) Health() map[string]string {
@@ -48,4 +64,8 @@ func (s *service) Health() map[string]string {
 	return map[string]string{
 		"message": "It's healthy",
 	}
+}
+
+func (s *service) GetCollection(name string) *mongo.Collection {
+	return s.db.Database("money-minder").Collection(name)
 }
