@@ -28,23 +28,11 @@ func CreateUser(w http.ResponseWriter, r *http.Request) error {
 
 	result, err := userRepository.InsertUser(usr)
 	if err != nil {
-		return err
+		return APIError{
+			Status: http.StatusInternalServerError,
+			Msg:    err.Error(),
+		}
 	}
 
-	return writeJSON(w, http.StatusOK, result)
-}
-
-type APIError struct {
-	Status int
-	Msg    string
-}
-
-func (e APIError) Error() string {
-	return e.Msg
-}
-
-func writeJSON(w http.ResponseWriter, code int, v any) error {
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(code)
-	return json.NewEncoder(w).Encode(v)
+	return WriteJSON(w, http.StatusOK, result)
 }
