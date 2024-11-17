@@ -12,6 +12,15 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", s.healthHandler)
 	mux.HandleFunc("POST /users", makeHandler(handlers.CreateUser))
+	mux.HandleFunc("POST /cards", makeHandler(handlers.CreateCard))
+	mux.HandleFunc("POST /spends", makeHandler(handlers.CreateSpend))
+	mux.HandleFunc("GET /users/{id}", makeHandler(handlers.GetUserByID))
+	mux.HandleFunc("PUT /users/{id}/password", makeHandler(handlers.UpdateUserPassword))
+	mux.HandleFunc("PUT /users/{id}/username", makeHandler(handlers.UpdateUserName))
+	mux.HandleFunc("POST /users/{id}/cards", makeHandler(handlers.AddUserCard))
+	mux.HandleFunc("DELETE /users/{id}/cards", makeHandler(handlers.RemoveUserCard))
+	mux.HandleFunc("POST /users/{id}/spends", makeHandler(handlers.AddUserSpend))
+	mux.HandleFunc("DELETE /users/{id}/spends", makeHandler(handlers.RemoveUserSpend))
 
 	return mux
 }

@@ -23,6 +23,15 @@ func (r *UserRepo) InsertUser(usr *types.User) (interface{}, error) {
 	return result, nil
 }
 
+func (r *UserRepo) DeleteUser(usr *types.User) (interface{}, error) {
+	result, err := r.MongoCollection.DeleteOne((context.Background()), usr)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (r *UserRepo) FindUserByID(usrID string) (*types.User, error) {
 	id, err := primitive.ObjectIDFromHex(usrID)
 	if err != nil {
@@ -96,31 +105,22 @@ func (r *UserRepo) UpdatePassword(usrID string, newPassword string) error {
 	return nil
 }
 
-func (r *UserRepo) AddSpend(userID string, spend *types.Spend) error {
-	id, err := primitive.ObjectIDFromHex(userID)
+func (r *UserRepo) AddCard(userID string, cardID string, cardRepo *CardRepo) error {
+
+	userObjectID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid user ID: %w", err)
 	}
 
-	filter := bson.D{{"_id", id}}
-	update := bson.D{{"$push", bson.D{{"spends", spend}}}}
-
-	_, err = r.MongoCollection.UpdateOne(context.Background(), filter, update)
+	card, err := cardRepo.FindCardByID(cardID)
 	if err != nil {
-		return fmt.Errorf("failed to add spend to user: %w", err)
+		return fmt.Errorf("failed to find card: %w", err)
+	}
+	if card == nil {
+		return fmt.Errorf("card not found")
 	}
 
-	return nil
-}
-
-func (r *UserRepo) AddCard(userID string, card *types.Card) error {
-	id, err := primitive.ObjectIDFromHex(userID)
-	if err != nil {
-		return err
-	}
-
-	// Construct the filter and update query
-	filter := bson.D{{"_id", id}}
+	filter := bson.D{{"_id", userObjectID}}
 	update := bson.D{{"$push", bson.D{{"cards", card}}}}
 
 	_, err = r.MongoCollection.UpdateOne(context.Background(), filter, update)
@@ -131,45 +131,79 @@ func (r *UserRepo) AddCard(userID string, card *types.Card) error {
 	return nil
 }
 
-func (r *UserRepo) RemoveCard(userID string, cardID string) error {
-	userObjID, err := primitive.ObjectIDFromHex(userID)
+func (r *UserRepo) RemoveCard(userID string, cardID string, cardRepo *CardRepo) error {
+
+	userObjectID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid user ID: %w", err)
 	}
 
-	cardObjID, err := primitive.ObjectIDFromHex(cardID)
+	card, err := cardRepo.FindCardByID(cardID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to find card: %w", err)
+	}
+	if card == nil {
+		return fmt.Errorf("card not found")
 	}
 
-	filter := bson.D{{"_id", userObjID}}
-	update := bson.D{{"$pull", bson.D{{"cards", bson.D{{"_id", cardObjID}}}}}}
+	filter := bson.D{{"_id", userObjectID}}
+	update := bson.D{{"$pull", bson.D{{"cards", bson.D{{"$eq", card}}}}}}
 
 	_, err = r.MongoCollection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		return fmt.Errorf("failed to remove card from user: %w", err)
+		return fmt.Errorf("failed to delete card from user: %w", err)
 	}
 
 	return nil
 }
 
-func (r *UserRepo) RemoveSpend(userID string, spendID string) error {
+func (r *UserRepo) AddSpend(userID string, spendID string, spendRepo *SpendRepo) error {
+
 	userObjID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid user ID: %w", err)
 	}
 
-	spendObjID, err := primitive.ObjectIDFromHex(spendID)
+	spend, err := spendRepo.FindSpendByID(spendID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to find spend: %w", err)
+	}
+	if spend == nil {
+		return fmt.Errorf("spend not found")
 	}
 
 	filter := bson.D{{"_id", userObjID}}
-	update := bson.D{{"$pull", bson.D{{"spends", bson.D{{"_id", spendObjID}}}}}}
+	update := bson.D{{"$push", bson.D{{"spends", spend}}}}
 
 	_, err = r.MongoCollection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		return fmt.Errorf("failed to remove spend from user: %w", err)
+		return fmt.Errorf("failed to add spend to user: %w", err)
+	}
+
+	return nil
+}
+
+func (r *UserRepo) RemoveSpend(userID string, spendID string, spendRepo *SpendRepo) error {
+
+	userObjectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return fmt.Errorf("invalid user ID: %w", err)
+	}
+
+	spend, err := spendRepo.FindSpendByID(spendID)
+	if err != nil {
+		return fmt.Errorf("failed to find spend: %w", err)
+	}
+	if spend == nil {
+		return fmt.Errorf("spend not found")
+	}
+
+	filter := bson.D{{"_id", userObjectID}}
+	update := bson.D{{"$pull", bson.D{{"spends", bson.D{{"$eq", spend}}}}}}
+
+	_, err = r.MongoCollection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		return fmt.Errorf("failed to delete spend from user: %w", err)
 	}
 
 	return nil
