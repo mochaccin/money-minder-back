@@ -27,3 +27,51 @@ func CreateCard(w http.ResponseWriter, r *http.Request) error {
 
 	return WriteJSON(w, http.StatusOK, result)
 }
+
+func DeleteCard(w http.ResponseWriter, r *http.Request) error {
+
+	cardId := r.PathValue("id")
+
+	result, err := cardRepository.DeleteCard(cardId)
+
+	if err != nil {
+		return APIError{
+			Status: http.StatusInternalServerError,
+			Msg:    err.Error(),
+		}
+	}
+
+	return WriteJSON(w, http.StatusOK, result)
+}
+
+func GetCardByID(w http.ResponseWriter, r *http.Request) error {
+
+	id := r.PathValue("id")
+
+	user, err := cardRepository.FindCardByID(id)
+
+	if err != nil {
+		return APIError{
+			Status: http.StatusInternalServerError,
+			Msg:    err.Error(),
+		}
+	}
+
+	return WriteJSON(w, http.StatusOK, user)
+}
+
+func GetAllCardsByUserID(w http.ResponseWriter, r *http.Request) error {
+
+	id := r.PathValue("id")
+
+	user, err := cardRepository.GetCardsByUserID(id)
+
+	if err != nil {
+		return APIError{
+			Status: http.StatusInternalServerError,
+			Msg:    err.Error(),
+		}
+	}
+
+	return WriteJSON(w, http.StatusOK, user)
+}

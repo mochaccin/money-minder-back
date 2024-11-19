@@ -94,18 +94,18 @@ func (r *CardRepo) UpdateName(cardID string, newName string) error {
 	return nil
 }
 
-func (r *CardRepo) AddTransaction(cardID string, spend *types.Spend) error {
+func (r *CardRepo) AddSpend(cardID string, spend *types.Spend) error {
 	id, err := primitive.ObjectIDFromHex(cardID)
 	if err != nil {
 		return err
 	}
 
 	filter := bson.D{{"_id", id}}
-	update := bson.D{{"$push", bson.D{{"transactions", spend}}}}
+	update := bson.D{{"$push", bson.D{{"spends", spend}}}}
 
 	_, err = r.MongoCollection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		return fmt.Errorf("failed to add transaction to card: %w", err)
+		return fmt.Errorf("failed to add spends to card: %w", err)
 	}
 
 	return nil
@@ -134,6 +134,7 @@ func (r *UserRepo) RemoveTransaction(cardID string, transactionID string) error 
 }
 
 func (r *CardRepo) GetCardsByUserID(userID string) ([]*types.Card, error) {
+
 	filter := bson.M{"user_id": userID}
 	var cards []*types.Card
 
