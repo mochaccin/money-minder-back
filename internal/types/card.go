@@ -9,5 +9,5 @@ type Card struct {
 	CardNumber         string               `bson:"card_number" json:"card_number"`
 	CardExpirationDate string               `bson:"card_expiration_date" json:"card_expiration_date"`
 	CardCVV            string               `bson:"card_cvv" json:"card_cvv"`
-	Spends             []primitive.ObjectID `bson:"spends" json:"spends"`
+	Spends             []primitive.ObjectID `bson:"spends,omitempty" json:"spends,omitempty"`
 }

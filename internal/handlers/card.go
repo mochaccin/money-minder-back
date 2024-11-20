@@ -48,7 +48,7 @@ func GetCardByID(w http.ResponseWriter, r *http.Request) error {
 
 	id := r.PathValue("id")
 
-	user, err := cardRepository.FindCardByID(id)
+	card, err := cardRepository.FindCardByID(id)
 
 	if err != nil {
 		return APIError{
@@ -57,14 +57,14 @@ func GetCardByID(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	return WriteJSON(w, http.StatusOK, user)
+	return WriteJSON(w, http.StatusOK, card)
 }
 
 func GetAllCardsByUserID(w http.ResponseWriter, r *http.Request) error {
 
 	id := r.PathValue("id")
 
-	user, err := cardRepository.GetCardsByUserID(id)
+	cards, err := cardRepository.GetCardsByUserID(id)
 
 	if err != nil {
 		return APIError{
@@ -73,7 +73,7 @@ func GetAllCardsByUserID(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	return WriteJSON(w, http.StatusOK, user)
+	return WriteJSON(w, http.StatusOK, cards)
 }
 
 func AddCardSpend(w http.ResponseWriter, r *http.Request) error {
