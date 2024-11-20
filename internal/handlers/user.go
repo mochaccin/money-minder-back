@@ -194,7 +194,7 @@ func RemoveUserSpend(w http.ResponseWriter, r *http.Request) error {
 	if derr != nil {
 		return APIError{
 			Status: http.StatusBadRequest,
-			Msg:    "Couldnt remove spend to from, verify that the values are formatted correctly",
+			Msg:    "Couldnt remove spend from user, verify that the values are formatted correctly",
 		}
 	}
 

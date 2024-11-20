@@ -24,6 +24,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("DELETE /users/{id}/cards", makeHandler(handlers.RemoveUserCard))
 	mux.HandleFunc("POST /users/{id}/spends", makeHandler(handlers.AddUserSpend))
 	mux.HandleFunc("DELETE /users/{id}/spends", makeHandler(handlers.RemoveUserSpend))
+	mux.HandleFunc("POST /cards/{id}/spends", makeHandler(handlers.AddCardSpend))
+	mux.HandleFunc("DELETE /cards/{id}/spends", makeHandler(handlers.RemoveCardSpend))
 
 	return mux
 }

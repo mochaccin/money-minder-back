@@ -94,10 +94,20 @@ func (r *CardRepo) UpdateName(cardID string, newName string) error {
 	return nil
 }
 
-func (r *CardRepo) AddSpend(cardID string, spend *types.Spend) error {
-	id, err := primitive.ObjectIDFromHex(cardID)
+func (r *CardRepo) AddSpend(cardId string, spendId string, spendRepo *SpendRepo) error {
+
+	id, err := primitive.ObjectIDFromHex(cardId)
 	if err != nil {
 		return err
+	}
+
+	spend, err := spendRepo.FindSpendByID(spendId)
+
+	if err != nil {
+		return fmt.Errorf("failed to find card: %w", err)
+	}
+	if spend == nil {
+		return fmt.Errorf("card not found")
 	}
 
 	filter := bson.D{{"_id", id}}
@@ -111,23 +121,27 @@ func (r *CardRepo) AddSpend(cardID string, spend *types.Spend) error {
 	return nil
 }
 
-func (r *UserRepo) RemoveTransaction(cardID string, transactionID string) error {
-	cardObjID, err := primitive.ObjectIDFromHex(cardID)
+func (r *CardRepo) RemoveSpend(cardID string, spendID string, spendRepo *SpendRepo) error {
+
+	cardObjectId, err := primitive.ObjectIDFromHex(cardID)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid user ID: %w", err)
 	}
 
-	transactionObjID, err := primitive.ObjectIDFromHex(transactionID)
+	spend, err := spendRepo.FindSpendByID(spendID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to find spend: %w", err)
+	}
+	if spend == nil {
+		return fmt.Errorf("spend not found")
 	}
 
-	filter := bson.D{{"_id", cardObjID}}
-	update := bson.D{{"$pull", bson.D{{"transactions", bson.D{{"_id", transactionObjID}}}}}}
+	filter := bson.D{{"_id", cardObjectId}}
+	update := bson.D{{"$pull", bson.D{{"spends", bson.D{{"$eq", spend}}}}}}
 
 	_, err = r.MongoCollection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		return fmt.Errorf("failed to remove transaction from card: %w", err)
+		return fmt.Errorf("failed to delete spend from card: %w", err)
 	}
 
 	return nil
@@ -135,27 +149,30 @@ func (r *UserRepo) RemoveTransaction(cardID string, transactionID string) error 
 
 func (r *CardRepo) GetCardsByUserID(userID string) ([]*types.Card, error) {
 
-	filter := bson.M{"user_id": userID}
+	ownerID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid userID: %w", err)
+	}
+
+	filter := bson.M{"owner": ownerID}
 	var cards []*types.Card
 
 	cursor, err := r.MongoCollection.Find(context.Background(), filter)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to find cards: %w", err)
 	}
 	defer cursor.Close(context.Background())
 
 	for cursor.Next(context.Background()) {
-
 		var card types.Card
-
 		if err := cursor.Decode(&card); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to decode card: %w", err)
 		}
 		cards = append(cards, &card)
 	}
 
 	if err := cursor.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cursor error: %w", err)
 	}
 
 	return cards, nil
