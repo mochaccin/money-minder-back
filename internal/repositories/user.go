@@ -105,6 +105,23 @@ func (r *UserRepo) UpdatePassword(usrID string, newPassword string) error {
 	return nil
 }
 
+func (r *UserRepo) UpdateBalance(usrID string, newBalance int) error {
+	id, err := primitive.ObjectIDFromHex(usrID)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.D{{"_id", id}}
+	update := bson.D{{"$set", bson.D{{"balance", newBalance}}}}
+
+	_, err = r.MongoCollection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *UserRepo) AddCard(userID string, cardID string, cardRepo *CardRepo) error {
 
 	userObjectID, err := primitive.ObjectIDFromHex(userID)

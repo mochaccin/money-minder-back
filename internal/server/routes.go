@@ -8,6 +8,23 @@ import (
 	"net/http"
 )
 
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		// Handle preflight requests
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Call the next handler
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (s *Server) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", s.healthHandler)
@@ -20,6 +37,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("GET /users/{id}", makeHandler(handlers.GetUserByID))
 	mux.HandleFunc("PUT /users/{id}/password", makeHandler(handlers.UpdateUserPassword))
 	mux.HandleFunc("PUT /users/{id}/username", makeHandler(handlers.UpdateUserName))
+	mux.HandleFunc("PUT /users/{id}/balance", makeHandler(handlers.UpdateUserBalance))
 	mux.HandleFunc("POST /users/{id}/cards", makeHandler(handlers.AddUserCard))
 	mux.HandleFunc("DELETE /users/{id}/cards", makeHandler(handlers.RemoveUserCard))
 	mux.HandleFunc("POST /users/{id}/spends", makeHandler(handlers.AddUserSpend))
@@ -31,7 +49,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("GET /users/{id}/spends", makeHandler(handlers.GetAllSpendsByUserID))
 	mux.HandleFunc("GET /cards/{id}/spends", makeHandler(handlers.GetAllSpendsByCardID))
 
-	return mux
+	return corsMiddleware(mux)
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {

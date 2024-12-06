@@ -109,6 +109,31 @@ func UpdateUserName(w http.ResponseWriter, r *http.Request) error {
 	return WriteJSON(w, http.StatusOK, "User's username updated succesfully")
 }
 
+func UpdateUserBalance(w http.ResponseWriter, r *http.Request) error {
+
+	userId := r.PathValue("id")
+
+	updateUsr := &UpdateUserBalanceRequest{}
+	derr := json.NewDecoder(r.Body).Decode(updateUsr)
+
+	if derr != nil {
+		return APIError{
+			Status: http.StatusBadRequest,
+			Msg:    "Couldnt update user balance, verify that the values are formatted correctly",
+		}
+	}
+
+	err := userRepository.UpdateBalance(userId, updateUsr.NewBalance)
+	if err != nil {
+		return APIError{
+			Status: http.StatusInternalServerError,
+			Msg:    err.Error(),
+		}
+	}
+
+	return WriteJSON(w, http.StatusOK, "User's balance updated succesfully")
+}
+
 func AddUserCard(w http.ResponseWriter, r *http.Request) error {
 
 	userId := r.PathValue("id")
@@ -215,6 +240,10 @@ type UpdateUserPasswordRequest struct {
 
 type UpdateUserNameRequest struct {
 	NewUsername string `json:"newUsername" bson:"new_username"`
+}
+
+type UpdateUserBalanceRequest struct {
+	NewBalance int `json:"newBalance" bson:"new_balance"`
 }
 
 type UserCardRequest struct {
