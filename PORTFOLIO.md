@@ -28,4 +28,4 @@ Simple React Native app that calls to a Go std library REST API, with JWT authen
 
 > Very pleasant experience to try a new programming language and made me fall in love with Go. Also got to skip a university course since I delivered the finished project at the start of the course.
 
-<!-- featured:true -->
+<!-- featured:false -->
